@@ -84,6 +84,97 @@ def ratio_math(calc, result):
         return "mismatch", "%s 应为 %.2f%%，实际 %s" % (calc, expect, result)
     return "checked", ""
 
+ALLOWED_ARITH = re.compile(r"^[0-9+\-*/(). ]+$")
+DATA_DEPENDENT = ("样本", "位次", "中位")
+
+
+def norm_expr(s):
+    return (s.replace("×", "*").replace("÷", "/")
+            .replace("（", "(").replace("）", ")").replace("，", ""))
+
+
+def eval_arith(expr):
+    """只接受纯四则运算字符，安全求值；不可求值返回 None。"""
+    e = norm_expr(expr).strip().rstrip("。；;")
+    if not e or not ALLOWED_ARITH.match(e):
+        return None
+    try:
+        return float(eval(e, {"__builtins__": {}}, {}))
+    except Exception:
+        return None
+
+
+def close(a, b, tol=0.011):
+    return abs(a - b) <= max(tol, abs(b) * 1e-9)
+
+
+def recompute(calc, result):
+    """复算一条示例：calc 中每个「算式 = 结果」逐段验算，再用 result 的等式或末位数字回验。
+
+    返回 (status, detail)：status 为 "checked" / "mismatch" / "skip"。
+    calc 形如 `A - B = C；D ÷ E`，result 形如 `D ÷ E = F%`、`F 元/工位/月`、`F 天`。
+    分位/中位这类需要原始样本的值（见 DATA_DEPENDENT）只验算式内部一致性。
+    """
+    calc, result = str(calc or "").strip(), str(result or "").strip()
+    mism, evaluated, last_val = [], 0, None
+    segs = [s for s in re.split(r"[；;]", calc) if s.strip()]
+    for seg in segs:
+        parts = [p.strip() for p in seg.split("=")]
+        if len(parts) < 2:
+            v = eval_arith(parts[0])
+            if v is not None:
+                evaluated += 1
+                last_val = v
+            continue
+        expr_part, rhs = None, None
+        for i in range(len(parts) - 1, 0, -1):
+            v = eval_arith(parts[i])
+            if v is not None:
+                rhs, expr_part = v, parts[i - 1]
+                break
+        left = eval_arith(expr_part) if expr_part is not None else None
+        if left is None or rhs is None:
+            continue
+        evaluated += 1
+        last_val = rhs
+        if not close(left, rhs):
+            mism.append("%s 应为 %s，实际写 %s" % (expr_part, rhs, parts[-1]))
+
+    eqs = list(re.finditer(r"([\d.]+)\s*[÷/]\s*([\d.]+)\s*=\s*([\d.]+)\s*(%?)", result))
+    if eqs:
+        last_div = None
+        for seg in reversed(segs):
+            md = re.search(r"([\d.]+)\s*[÷/]\s*([\d.]+)\s*$", seg.strip())
+            if md:
+                last_div = (float(md.group(1)), float(md.group(2)))
+                break
+        if last_div is not None:
+            a0, b0 = float(eqs[-1].group(1)), float(eqs[-1].group(2))
+            if not (close(last_div[0], a0, 1e-9) and close(last_div[1], b0, 1e-9)):
+                mism.append("示例算式的分子/分母与结果等式不一致：%s vs %s" % (last_div, (a0, b0)))
+        for m in eqs:
+            a, b, c = float(m.group(1)), float(m.group(2)), float(m.group(3))
+            if b == 0:
+                mism.append("分母为 0: %s" % m.group(0))
+                continue
+            expect = a / b * (100.0 if m.group(4) else 1.0)
+            evaluated += 1
+            if not close(expect, c):
+                mism.append("%s 应为 %.4f，实际写 %s" % (m.group(0), expect, c))
+    elif last_val is not None and not any(w in calc + result for w in DATA_DEPENDENT):
+        nums = re.findall(r"-?\d+(?:\.\d+)?", result.replace(",", ""))
+        if nums:
+            target = float(nums[-1])
+            got = last_val * 100.0 if "%" in result else last_val
+            evaluated += 1
+            if not close(got, target):
+                mism.append("末值 %.4f 与 result 数字 %s 不符" % (got, nums[-1]))
+
+    if mism:
+        return "mismatch", "；".join(mism[:3])
+    if not evaluated:
+        return "skip", ""
+    return "checked", ""
 
 def main():
     ap = argparse.ArgumentParser()
@@ -146,7 +237,7 @@ def main():
                 bad_list.append("%s.%s" % (m.get("id"), k))
     rep.check("10-filters-dims-sources", not bad_list, "过滤条件/维度/来源表非空" if not bad_list else "缺: %s" % ",".join(bad_list[:6]))
 
-    no_digit, checked, mismatch, skipped = [], 0, [], 0
+    no_digit, checked, mismatch, skipped, checked_ids = [], 0, [], 0, []
     for m in metrics:
         e = m.get("example") or {}
         for k in EXAMPLE_FIELDS:
@@ -154,15 +245,16 @@ def main():
                 no_digit.append("%s.example.%s 为空" % (m.get("id"), k))
         if not re.search(r"\d", str(e.get("given", "")) + str(e.get("calc", "")) + str(e.get("result", ""))):
             no_digit.append("%s.example 无数字" % m.get("id"))
-        status, detail = ratio_math(str(e.get("calc", "")), str(e.get("result", "")))
+        status, detail = recompute(str(e.get("calc", "")), str(e.get("result", "")))
         if status == "checked":
             checked += 1
+            checked_ids.append(m.get("id"))
         elif status == "mismatch":
             mismatch.append("%s: %s" % (m.get("id"), detail))
         else:
             skipped += 1
     rep.check("11-example-has-numbers", not no_digit, "全部 32 条示例含虚拟数字" if not no_digit else ",".join(no_digit[:6]))
-    rep.check("12-example-math-recompute", not mismatch, "复算 %d 条比率型演算全部对得上（另 %d 条为计数/中位数型，不适用复算）%s" % (checked, skipped, "" if not mismatch else "；不符: " + "; ".join(mismatch[:4])))
+    rep.check("12-example-math-recompute", not mismatch, "复算 %d 条示例全部对得上；另 %d 条为无算式型%s" % (checked, skipped, "" if not mismatch else "；不符: " + "; ".join(mismatch[:4])))
 
     by_id = {m.get("id"): m for m in metrics}
     defs = {k: " ".join(str((by_id.get(k) or {}).get(f, "")) for f in ("name", "definition", "formula")) for k in ("OF-03", "OR-01", "SOP-01", "OF-02", "IR-03")}
@@ -190,7 +282,7 @@ def main():
             print("  - " + f)
         sys.exit(1)
     print("")
-    print("[SUMMARY] metrics=%d panels=%d ratio_examples_recomputed=%d non_ratio_examples=%d" % (len(metrics), len(panels), checked, skipped))
+    print("[SUMMARY] metrics=%d panels=%d examples_recomputed=%d examples_without_arith=%d" % (len(metrics), len(panels), checked, skipped))
     print("[RESULT] PASS %d/%d checks · 32 条口径 · 8 个面板 · 每面板 >= 2 条" % (total, total))
     sys.exit(0)
 
