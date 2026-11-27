@@ -35,10 +35,10 @@ python tools/negative_test.py;  echo EXIT=$?     # 反证：两条各 FAIL 1 项
 [PASS] 9-formula-complete           分子/分母/计算方式齐全
 [PASS] 10-filters-dims-sources      过滤条件/维度/来源表非空
 [PASS] 11-example-has-numbers       全部 32 条示例含虚拟数字
-[PASS] 12-example-math-recompute    复算 31 条示例全部对得上；另 1 条为无算式型
+[PASS] 12-example-math-recompute    复算 32 条示例全部对得上（覆盖全部条目）
 [PASS] 13-definition-alignment      北极星/出租率/SOP/采纳率/签约额 定义与需求原文用词一致
 
-[SUMMARY] metrics=32 panels=8 examples_recomputed=31 examples_without_arith=1
+[SUMMARY] metrics=32 panels=8 examples_recomputed=32 examples_without_arith=0
 [RESULT] PASS 13/13 checks · 32 条口径 · 8 个面板 · 每面板 >= 2 条
 ```
 
@@ -47,7 +47,7 @@ python tools/negative_test.py;  echo EXIT=$?     # 反证：两条各 FAIL 1 项
 | AC | 原文要求 | 实际产物 | 证据 |
 | --- | --- | --- | --- |
 | 1 | 条目数 >= 30，且 8 个面板每个至少有 2 条 | 32 条；面板 5/3/4/5/4/3/4/4，最少 3 条 | 校验项 4、5、6（见上） |
-| 2 | 每条都有分子、分母（或计算方式）、过滤条件与虚构演算示例 | `dash/metrics/seed.yaml` 每条 14 字段，`formula.numerator/denominator/expression` + `filters[]` + `granularity` + `dimensions[]` + `source_tables[]` + `example.{given,calc,result}` | 校验项 8–12（31 条算式逐条复算） |
+| 2 | 每条都有分子、分母（或计算方式）、过滤条件与虚构演算示例 | `dash/metrics/seed.yaml` 每条 14 字段，`formula.numerator/denominator/expression` + `filters[]` + `granularity` + `dimensions[]` + `source_tables[]` + `example.{given,calc,result}` | 校验项 8–12（32 条算式逐条复算） |
 | 3 | seed.yaml 通过口径库格式校验（命令输出附在 PR） | `tools/validate_metrics.py` 13 项校验 | 本文件第 3 节逐字输出 + `tools/validate_metrics.out` + PR #1 描述 |
 | 4 | 北极星有效连接与出租率的定义与本单文字一致 | OF-03 / OR-01 定义原文一致 | 校验项 13 关键词比对 + `docs/metric-dictionary.md` 通用约定 |
 
@@ -59,7 +59,7 @@ python tools/negative_test.py;  echo EXIT=$?     # 反证：两条各 FAIL 1 项
 case1 定义反证（IR-03「首年」→「年度」）: exit=1 fails=1
   [FAIL] 13-definition-alignment      IR-03 缺「首年」
 case2 算式反证（OR-04 分子 14400000→14400001）: exit=1 fails=1
-  [FAIL] 12-example-math-recompute    复算 30 条示例全部对得上；另 1 条为无算式型；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
+  [FAIL] 12-example-math-recompute    复算 31 条示例全部对得上（覆盖全部条目）；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
 restored: exit=0
 ```
 
