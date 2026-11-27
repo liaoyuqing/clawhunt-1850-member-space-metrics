@@ -64,23 +64,23 @@ echo EXIT=$?                          # 预期：EXIT=0
 [PASS] 9-formula-complete           分子/分母/计算方式齐全
 [PASS] 10-filters-dims-sources      过滤条件/维度/来源表非空
 [PASS] 11-example-has-numbers       全部 32 条示例含虚拟数字
-[PASS] 12-example-math-recompute    复算 31 条示例全部对得上；另 1 条为无算式型
+[PASS] 12-example-math-recompute    复算 32 条示例全部对得上（覆盖全部条目）
 [PASS] 13-definition-alignment      北极星/出租率/SOP/采纳率/签约额 定义与需求原文用词一致
 
-[SUMMARY] metrics=32 panels=8 examples_recomputed=31 examples_without_arith=1
+[SUMMARY] metrics=32 panels=8 examples_recomputed=32 examples_without_arith=0
 [RESULT] PASS 13/13 checks · 32 条口径 · 8 个面板 · 每面板 >= 2 条
 ```
 
 任何人克隆同一份仓库、对同一份 `dash/metrics/seed.yaml` 复跑，结果与 `tools/validate_metrics.out` 逐字一致。
 
-校验第 12 项做的是**逐条算式复算**：把每条示例的 `calc` 按分号分段、逐段求「算式 = 结果」，再复算 `result` 中的 `A ÷ B = C%`，并核对 `calc` 与 `result` 两边的分子分母是否一致；偏差超过 0.011 记 mismatch。32 条里 31 条含算式全部复算通过，仅 IR-02（中位数 41 天）需要原始样本、无算式可算。
+校验第 12 项做的是**逐条算式复算**：把每条示例的 `calc` 按分号分段、逐段求「算式 = 结果」，再复算 `result` 中的 `A ÷ B = C%`，并核对 `calc` 与 `result` 两边的分子分母是否一致；偏差超过 0.011 记 mismatch。32 条示例**全部**复算通过，包括中位数型（IR-02）的位次算式 `(27+1) ÷ 2 = 14`。
 
 ## 五、验收标准对照
 
 | AC | 要求 | 产物 | 证据 |
 | --- | --- | --- | --- |
 | 1 | 条目数 >= 30，8 面板每面板 >= 2 | `dash/metrics/seed.yaml` | 校验 4/5/6 项：32 条，最少面板 3 条 |
-| 2 | 每条有分子、分母（或计算方式）、过滤条件与虚构演算示例 | `dash/metrics/seed.yaml` 每条 14 字段（含 granularity / dimensions / source_tables） | 校验 8-12 项；文档 32 小节逐条展开 |
+| 2 | 每条有分子、分母（或计算方式）、过滤条件与虚构演算示例 | `dash/metrics/seed.yaml` 每条 14 字段（含 granularity / dimensions / source_tables） | 校验 8-12 项（32 条算式全部复算）；文档 32 小节逐条展开 |
 | 3 | seed.yaml 通过口径库格式校验（命令输出附在 PR） | `tools/validate_metrics.py` + `tools/validate_metrics.out` + 本文件第四节 + PR #1 | 脚本、被校验文件、原始输出同处本仓库同一分支 |
 | 4 | 北极星有效连接与出租率定义与需求文字一致 | `docs/metric-dictionary.md` 通用约定 | 校验 13 项关键词比对 |
 
@@ -100,7 +100,7 @@ echo EXIT=$?                          # 预期：EXIT=0
 case1 定义反证（IR-03「首年」→「年度」）: exit=1 fails=1
   [FAIL] 13-definition-alignment      IR-03 缺「首年」
 case2 算式反证（OR-04 分子 14400000→14400001）: exit=1 fails=1
-  [FAIL] 12-example-math-recompute    复算 30 条示例全部对得上；另 1 条为无算式型；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
+  [FAIL] 12-example-math-recompute    复算 31 条示例全部对得上（覆盖全部条目）；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
 restored: exit=0
 ```
 
