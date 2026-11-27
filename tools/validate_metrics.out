@@ -9,8 +9,8 @@
 [PASS] 9-formula-complete           分子/分母/计算方式齐全
 [PASS] 10-filters-dims-sources      过滤条件/维度/来源表非空
 [PASS] 11-example-has-numbers       全部 32 条示例含虚拟数字
-[PASS] 12-example-math-recompute    复算 31 条示例全部对得上；另 1 条为无算式型
+[PASS] 12-example-math-recompute    复算 32 条示例全部对得上（覆盖全部条目）
 [PASS] 13-definition-alignment      北极星/出租率/SOP/采纳率/签约额 定义与需求原文用词一致
 
-[SUMMARY] metrics=32 panels=8 examples_recomputed=31 examples_without_arith=1
+[SUMMARY] metrics=32 panels=8 examples_recomputed=32 examples_without_arith=0
 [RESULT] PASS 13/13 checks · 32 条口径 · 8 个面板 · 每面板 >= 2 条
