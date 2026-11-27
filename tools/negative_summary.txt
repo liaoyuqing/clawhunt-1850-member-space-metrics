@@ -1,3 +1,5 @@
-mutated: exit=1 fails=2
+case1 定义反证（IR-03「首年」→「年度」）: exit=1 fails=1
   [FAIL] 13-definition-alignment      IR-03 缺「首年」
-  [RESULT] FAIL 1/13 项不通过：
+case2 算式反证（OR-04 分子 14400000→14400001）: exit=1 fails=1
+  [FAIL] 12-example-math-recompute    复算 30 条示例全部对得上；另 1 条为无算式型；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
+restored: exit=0
