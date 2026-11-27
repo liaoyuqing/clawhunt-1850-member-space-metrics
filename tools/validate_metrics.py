@@ -140,24 +140,33 @@ def recompute(calc, result):
         if not close(left, rhs):
             mism.append("%s 应为 %s，实际写 %s" % (expr_part, rhs, parts[-1]))
 
-    eqs = list(re.finditer(r"([\d.]+)\s*[÷/]\s*([\d.]+)\s*=\s*([\d.]+)\s*(%?)", result))
+    eqs = list(re.finditer(r"([\d.]+)(\s*[÷/]\s*[\d.]+)+\s*=\s*([\d.]+)\s*(%?)", result))
     if eqs:
         last_div = None
         for seg in reversed(segs):
-            md = re.search(r"([\d.]+)\s*[÷/]\s*([\d.]+)\s*$", seg.strip())
+            md = re.search(r"([\d.]+(?:\s*[÷/]\s*[\d.]+)+)\s*$", seg.strip())
             if md:
-                last_div = (float(md.group(1)), float(md.group(2)))
+                vals = [float(x) for x in re.findall(r"[\d.]+", md.group(1))]
+                if len(vals) >= 2:
+                    last_div = (vals[0], vals[1])
                 break
         if last_div is not None:
-            a0, b0 = float(eqs[-1].group(1)), float(eqs[-1].group(2))
-            if not (close(last_div[0], a0, 1e-9) and close(last_div[1], b0, 1e-9)):
-                mism.append("示例算式的分子/分母与结果等式不一致：%s vs %s" % (last_div, (a0, b0)))
+            first = [float(x) for x in re.findall(r"[\d.]+", eqs[-1].group(0).split("=")[0])]
+            if len(first) >= 2 and not (close(last_div[0], first[0], 1e-9) and close(last_div[1], first[1], 1e-9)):
+                mism.append("示例算式的分子/分母与结果等式不一致：%s vs %s" % (last_div, (first[0], first[1])))
         for m in eqs:
-            a, b, c = float(m.group(1)), float(m.group(2)), float(m.group(3))
-            if b == 0:
-                mism.append("分母为 0: %s" % m.group(0))
+            vals = [float(x) for x in re.findall(r"[\d.]+", m.group(0).split("=")[0])]
+            c = float(m.group(3))
+            acc, zero = vals[0], False
+            for v in vals[1:]:
+                if v == 0:
+                    mism.append("分母为 0: %s" % m.group(0))
+                    zero = True
+                    break
+                acc /= v
+            if zero:
                 continue
-            expect = a / b * (100.0 if m.group(4) else 1.0)
+            expect = acc * (100.0 if m.group(4) else 1.0)
             evaluated += 1
             if not close(expect, c):
                 mism.append("%s 应为 %.4f，实际写 %s" % (m.group(0), expect, c))
