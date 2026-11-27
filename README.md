@@ -23,7 +23,7 @@ curl -sL "https://api.github.com/repos/liaoyuqing/clawhunt-1850-member-space-met
 
 ```
 README.md                    # 本文件：克隆、依赖、运行与预期输出
-dash/metrics/seed.yaml       # 指标口径库：32 条 / 8 个面板 / 32987 字节 / 932 行
+dash/metrics/seed.yaml       # 指标口径库：32 条 / 8 个面板 / 33033 字节 / 932 行
 docs/metric-dictionary.md    # 口径说明文档（Markdown，按面板分节，29963 字节；每条含分子/分母/过滤/粒度/维度/来源表/虚构演算）
 docs/VERIFICATION.md         # 验证报告：校验命令逐字输出 + 四条 AC 逐条对照 + 反证结果
 docs/CHECKSUMS.txt           # 全部交付文件的 SHA-256 与字节数
@@ -53,7 +53,7 @@ echo EXIT=$?                          # 预期：EXIT=0
 ## 四、实测输出（`python tools/validate_metrics.py`，退出码 0，16 行）
 
 ```text
-[PASS] 1-yaml-parse[PASS] 1-yaml-parse                 文件 seed.yaml，32987 字节，932 行
+[PASS] 1-yaml-parse[PASS] 1-yaml-parse                 文件 seed.yaml，33033 字节，932 行
 [PASS] 2-top-level-fields           schema_version=1.0 library=member-space-metrics
 [PASS] 3-panel-set                  8 个面板: member_scale,profile_completeness,sop_execution,opportunity_funnel,miniapp_activity,ai_adoption,investment_revenue,occupancy_renewal
 [PASS] 4-metric-count>=30           实际 32 条
