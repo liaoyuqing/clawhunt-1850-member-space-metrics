@@ -232,7 +232,7 @@ metrics:
   example:
     given: 100 家有效会员企业中，68 家能力卡已发布且六段必填全非空
     calc: 68 ÷ 100
-    result: 68.00%
+    result: 68 ÷ 100 = 68.00%
   formula:
     numerator: 能力卡 status=published 且六段必填全非空的企业数
     denominator: 有效会员企业数
@@ -419,8 +419,8 @@ metrics:
   source_tables:
   - dwd_match_recommendation
   example:
-    given: 统计期内累计推送 1200 条，其中 50 条推送不满 7 天窗口不计，已满窗口 1150 条中采纳 391 条、未采纳 759 条（391 + 759 = 1150）
-    calc: 391 采纳 ÷ 1150 已满窗口（= 391 + 759）
+    given: 统计期内累计推送 1200 条，其中 50 条推送不满 7 天窗口不计；已满窗口 1150 条中采纳 391 条、未采纳 759 条（391 + 759 = 1150）
+    calc: 391 ÷ 1150
     result: 391 ÷ 1150 = 34.00%
   formula:
     numerator: recommendation 中 adopted_at 非空（企业点击采纳并生成跟进记录）的条数
@@ -448,9 +448,9 @@ metrics:
   - dwd_connection
   - dwd_demand
   example:
-    given: 2026 年 4 月产生 58 条双方确认记录，其中 7 条与 90 天内既有连接属同企业同需求
+    given: 4 月按 (企业对 + 需求) 在 90 天窗口内去重时，58 条双方确认记录里有 7 条是窗口内已计过的同企业同需求重复，其余 51 条窗口内首次
     calc: 58 - 7 = 51
-    result: 51 条（北极星）
+    result: 58 - 7 = 51 条（北极星）
   formula:
     numerator: 去重后的有效连接数（按 企业对 + 需求 在 90 天窗口内取首次）
     denominator: 1（计数型指标，分母固定为 1）
@@ -505,7 +505,7 @@ metrics:
   example:
     given: 期内 90 条需求中 78 条有有效响应，升序第 39、40 位为 6.2 与 6.8 小时
     calc: (6.2 + 6.8) ÷ 2
-    result: 6.50 小时
+    result: (6.2 + 6.8) ÷ 2 = 6.50 小时
   formula:
     numerator: 按响应时长升序排列后取中位样本的时长
     denominator: 1（中位数口径，分母为中位样本本身）
@@ -532,7 +532,7 @@ metrics:
   example:
     given: 100 家有效会员企业中 79 家完成小程序绑定并实名通过
     calc: 79 ÷ 100
-    result: 79.00%
+    result: 79 ÷ 100 = 79.00%
   formula:
     numerator: 小程序端绑定企业且实名审核通过的企业数
     denominator: 有效会员企业数（MS-02）
@@ -560,7 +560,7 @@ metrics:
   example:
     given: 4 月期初 100 家，其中 64 家产生有效会话事件
     calc: 64 ÷ 100
-    result: 64.00%
+    result: 64 ÷ 100 = 64.00%
   formula:
     numerator: 当月有有效事件（页面浏览/搜索/收藏/洽谈/报名）的企业数
     denominator: 期初有效会员企业数
@@ -783,7 +783,7 @@ metrics:
   example:
     given: 4 月 27 单签约，首年金额合计 186400000 分
     calc: 186400000 ÷ 100
-    result: 186400000 分 = 1864000.00 元
+    result: 186400000 ÷ 100 = 1864000.00 元
   formula:
     numerator: Σ 合同首年金额（分）
     denominator: 1（金额型指标，分母固定为 1）
@@ -897,7 +897,7 @@ metrics:
   example:
     given: 437 个已租工位月租金合计 174800000 分
     calc: 174800000 ÷ 437 ÷ 100
-    result: 4000.00 元/工位/月
+    result: 174800000 ÷ 437 ÷ 100 = 4000.00 元/工位/月
   formula:
     numerator: Σ 有效租约月租金（分）
     denominator: 期末已租工位数（OR-01 分子）
