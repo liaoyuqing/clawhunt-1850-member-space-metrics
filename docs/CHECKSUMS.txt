@@ -1,10 +1,13 @@
-SHA-256 of every delivered file (verify with: sha256sum -c this file's list, or python hashlib)
-532839df5ad566a198827e21e0a1f7d7ef43612eee3ca4f400b9a30fe72c731a  README.md  5922 bytes
+SHA-256 of every delivered file (verify with: sha256sum -c, or python hashlib)
+
+c1e3ab189dff3a80d0ff2dfd2558fbb586c45132bf89af87ddebc79f1409cd05  README.md  7272 bytes
 ff07517d6243c24d34f5907f5032ea6df7e6d0f6710646cfbf8a5f3dea876346  dash/metrics/seed.yaml  32747 bytes
 8fe04a14410990150b7ed68a5594bccbee6d9a0e2c3cb8ce36f3eef25b359703  docs/metric-dictionary.md  29723 bytes
-69932500f799a794fda1111dd2c0a30ab987679504393d127d7b31bac8b195c0  docs/VERIFICATION.md  3658 bytes
+f6e16c8fa5a46445b47a9c2365c1eab112a68802ad93b50ddfd0fbf89f86d4dc  docs/VERIFICATION.md  4322 bytes
 da39bd28c0e8a651d081a7787ebbc016a6d30ddd6f479c2329636704aaed2a99  tools/build_seed.py  28776 bytes
-1866a3a35ec1c7e932c8a9633f428b59d2e6111a12bad35ebd67889dab2bff93  tools/validate_metrics.py  8890 bytes
-dfc680aafed8caa2990eca47bf831425fabf6dc111a1ea7fa2712227e7820c62  tools/validate_metrics.out  1428 bytes
-257e75ef6792bbba1e3851dd3505765e7ee2cd67a4309140f51da922936fe800  tools/negative_test.py  1928 bytes
-0042cd7ac4b502ab61731fef4544664f0bb41dea176261cc9f2976fd50d36665  tools/negative_summary.txt  121 bytes
+8d2f6cb7da158a003201a680cbe56c73fd267b6b256b1f809250ae65d3cea332  tools/validate_metrics.py  12589 bytes
+5e895957ee2b6aa6719a534be25196e57e65f93818f4acbdd35d17294a5a8711  tools/validate_metrics.out  1389 bytes
+80df8ffcb959b09b1785b0dc491e712583585b58b72ac724f767ed1b9c03926c  tools/negative_test.py  2626 bytes
+68d072b460952a20cb32df2031db8287b2dd0fd6462c530964fa1c2bfb7d725a  tools/negative_summary.txt  448 bytes
+79c2ad9acb54ecf18158c4b638cbf665de0a948f986e7917a80e23c6c0e56267  tools/negative_def.out  1273 bytes
+213b18ea6f9ddb01a1ec4f9cf1572ba6b269b3d923200256435219dad3a8e698  tools/negative_math.out  1622 bytes
