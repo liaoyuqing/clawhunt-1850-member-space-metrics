@@ -1,9 +1,9 @@
 SHA-256 of every delivered file (verify with: sha256sum -c, or python hashlib)
 
-0c9416c783c03b75d71efca25534aed00669e4a553cc0a41e0a331cce67478bb  README.md  7306 bytes
+446519bf42b21822ec3466c209e7931eee127a489f78c9a24cb15d9460c4f6e1  README.md  7287 bytes
 f204acf55a6c3c5a21049f07b0f93123a979ef40a5d137be668835322aa31bab  dash/metrics/seed.yaml  33033 bytes
 8c21e94a3083a7b4e600689dfaff87196f5c5804f13461dcfaa4175272cf4e8f  docs/metric-dictionary.md  30009 bytes
-1c7ca240bea9e4a01e6186f6e86efcfd91607192c5f867e519d137600c1d34ff  docs/VERIFICATION.md  4339 bytes
+8734c81082d1b3c29a58faf6128660728dccc6fec7f7523e32cf720c362c00fb  docs/VERIFICATION.md  4320 bytes
 36d74d583d9f3cc93ab6707d5c455fa10e97f643c96999de384d7c06cc354497  tools/build_seed.py  29016 bytes
 ce406a564cb63842b8e78b4faa0e860fcd4909380da24da4e10c2f33911d6140  tools/validate_metrics.py  13426 bytes
 a37b0e2a14156e6154b3ea93240a314a234e0fb46da2e12284c117acb2095481  tools/validate_metrics.out  1386 bytes
