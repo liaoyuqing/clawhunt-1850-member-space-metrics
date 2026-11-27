@@ -170,6 +170,16 @@ def recompute(calc, result):
             if not close(got, target):
                 mism.append("末值 %.4f 与 result 数字 %s 不符" % (got, nums[-1]))
 
+    inner = re.finditer(r"[（(]([0-9+\-*/. ]+)[）)]\s*[÷/]\s*([0-9.]+)\s*=\s*([0-9.]+)", calc)
+    for m in inner:
+        v = eval_arith(m.group(1))
+        d = float(m.group(2))
+        if v is None or d == 0:
+            continue
+        evaluated += 1
+        if not close(v / d, float(m.group(3))):
+            mism.append("%s 应为 %.4f" % (m.group(0), v / d))
+
     if mism:
         return "mismatch", "；".join(mism[:3])
     if not evaluated:
@@ -254,7 +264,7 @@ def main():
         else:
             skipped += 1
     rep.check("11-example-has-numbers", not no_digit, "全部 32 条示例含虚拟数字" if not no_digit else ",".join(no_digit[:6]))
-    rep.check("12-example-math-recompute", not mismatch, "复算 %d 条示例全部对得上；另 %d 条为无算式型%s" % (checked, skipped, "" if not mismatch else "；不符: " + "; ".join(mismatch[:4])))
+    rep.check("12-example-math-recompute", not mismatch, "复算 %d 条示例全部对得上%s%s" % (checked, "" if skipped else "（覆盖全部条目）", "" if skipped == 0 else "；另 %d 条无算式" % skipped) + ("" if not mismatch else "；不符: " + "; ".join(mismatch[:4])))
 
     by_id = {m.get("id"): m for m in metrics}
     defs = {k: " ".join(str((by_id.get(k) or {}).get(f, "")) for f in ("name", "definition", "formula")) for k in ("OF-03", "OR-01", "SOP-01", "OF-02", "IR-03")}
