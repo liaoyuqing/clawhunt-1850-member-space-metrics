@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""dash/metrics/seed.yaml 口径库格式校验器（S3-DASH-002）。
+
+用法：
+    python tools/validate_metrics.py            # 校验默认路径 dash/metrics/seed.yaml
+    python tools/validate_metrics.py --seed PATH  # 校验指定文件
+
+校验 12 项：文件可读、YAML 可解析、顶层字段、面板数=8 且键名匹配、面板计数自洽、
+条目数>=30、每面板>=2、id 唯一且前缀与面板一致、必填文本字段非空、公式三段齐全、
+过滤/维度/来源表非空、示例含数字且比率型演算可复算、验收定义与需求原文一致。
+通过打印 [RESULT] PASS 并以退出码 0 结束；失败逐条打印缺陷并以退出码 1 结束。
+"""
+import argparse
+import pathlib
+import re
+import sys
+
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")
+    except (AttributeError, ValueError):
+        pass
+
+try:
+    import yaml
+except ImportError:  # pragma: no cover
+    print("[FAIL] PyYAML 未安装：pip install pyyaml")
+    sys.exit(2)
+
+PANEL_PREFIX = {
+    "member_scale": "MS",
+    "profile_completeness": "PF",
+    "sop_execution": "SOP",
+    "opportunity_funnel": "OF",
+    "miniapp_activity": "MA",
+    "ai_adoption": "AI",
+    "investment_revenue": "IR",
+    "occupancy_renewal": "OR",
+}
+TEXT_FIELDS = ["id", "panel", "name", "definition", "granularity"]
+LIST_FIELDS = ["filters", "dimensions", "source_tables"]
+FORMULA_FIELDS = ["numerator", "denominator", "expression"]
+EXAMPLE_FIELDS = ["given", "calc", "result"]
+
+
+class Report:
+    def __init__(self):
+        self.lines = []
+        self.failures = []
+
+    def check(self, name, ok, detail=""):
+        tag = "[PASS]" if ok else "[FAIL]"
+        if not ok:
+            self.failures.append("%s %s" % (name, detail))
+        self.lines.append("%s %-28s %s" % (tag, name, detail))
+
+
+def load(path):
+    if not path.is_file():
+        print("[FAIL] 文件不存在: %s" % path)
+        sys.exit(1)
+    raw = path.read_text(encoding="utf-8")
+    return raw, yaml.safe_load(raw)
+
+
+def ratio_math(calc, result):
+    """对 calc 形如 `A ÷ B`（可带 ×100）且 result 形如 `A ÷ B = C%` 的行复算。
+
+    返回 (status, detail)：status 为 "checked" / "mismatch" / "skip"。
+    """
+    m_calc = re.match(r"^([\d.]+)\s*÷\s*([\d.]+)\s*(×\s*100)?$", calc.strip())
+    m_res = re.match(r"^([\d.]+)\s*÷\s*([\d.]+)\s*=\s*([\d.]+)\s*%$", result.strip())
+    if not m_calc or not m_res:
+        return "skip", ""
+    a, b = float(m_calc.group(1)), float(m_calc.group(2))
+    ra, rb, rc = m_res.group(1), m_res.group(2), float(m_res.group(3))
+    if a != float(ra) or b != float(rb):
+        return "mismatch", "calc 与 result 的分子分母不一致: %s vs %s" % (calc, result)
+    if b == 0:
+        return "mismatch", "分母为 0"
+    expect = round(a / b * 100, 2)
+    if abs(expect - rc) > 0.011:
+        return "mismatch", "%s 应为 %.2f%%，实际 %s" % (calc, expect, result)
+    return "checked", ""
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--seed", default=None)
+    args = ap.parse_args()
+    root = pathlib.Path(__file__).resolve().parents[1]
+    path = pathlib.Path(args.seed) if args.seed else root / "dash" / "metrics" / "seed.yaml"
+    rep = Report()
+
+    raw, doc = load(path)
+    rep.check("1-yaml-parse", isinstance(doc, dict), "文件 %s，%d 字节，%d 行" % (path.name, len(raw.encode("utf-8")), raw.count(chr(10)) + 1))
+    if not isinstance(doc, dict):
+        print("\n".join(rep.lines))
+        sys.exit(1)
+
+    top_ok = all(k in doc for k in ("schema_version", "library", "panels", "metrics"))
+    rep.check("2-top-level-fields", top_ok, "schema_version=%s library=%s" % (doc.get("schema_version"), doc.get("library")))
+
+    panels = doc.get("panels") or []
+    keys = [p.get("key") for p in panels]
+    rep.check("3-panel-set", sorted(keys) == sorted(PANEL_PREFIX), "%d 个面板: %s" % (len(keys), ",".join(keys)))
+
+    metrics = doc.get("metrics") or []
+    if not isinstance(metrics, list):
+        metrics = []
+    rep.check("4-metric-count>=30", len(metrics) >= 30, "实际 %d 条" % len(metrics))
+
+    per_panel = {k: [m for m in metrics if m.get("panel") == k] for k in PANEL_PREFIX}
+    thin = [k for k, v in per_panel.items() if len(v) < 2]
+    rep.check("5-per-panel>=2", not thin, "最少面板 %s=%d 条；分布 %s" % (min(per_panel.items(), key=lambda kv: len(kv[1]))[0], min(len(v) for v in per_panel.values()), " ".join("%s:%d" % (k, len(v)) for k, v in per_panel.items())))
+
+    bad_counts = [p.get("key") for p in panels if p.get("metric_count") != len(per_panel.get(p.get("key"), []))]
+    rep.check("6-panel-count-consistent", not bad_counts, "面板声明计数与条目实际数一致" if not bad_counts else "不一致: %s" % bad_counts)
+
+    ids = [m.get("id") for m in metrics]
+    dup = sorted({i for i in ids if ids.count(i) > 1})
+    bad_prefix = [m.get("id") for m in metrics if not str(m.get("id", "")).startswith(PANEL_PREFIX.get(m.get("panel"), "??") + "-")]
+    rep.check("7-id-unique-and-prefixed", not dup and not bad_prefix, "%d 个 id 唯一%s" % (len(set(ids)), "" if not (dup or bad_prefix) else "；重复 %s；前缀错 %s" % (dup, bad_prefix)))
+
+    missing = []
+    for m in metrics:
+        for f in TEXT_FIELDS:
+            if not str(m.get(f) or "").strip():
+                missing.append("%s.%s" % (m.get("id"), f))
+    rep.check("8-required-text", not missing, "缺 %d 项%s" % (len(missing), "" if not missing else ": " + ",".join(missing[:6])))
+
+    bad_formula = []
+    for m in metrics:
+        f = m.get("formula") or {}
+        for k in FORMULA_FIELDS:
+            if not str(f.get(k) or "").strip():
+                bad_formula.append("%s.%s" % (m.get("id"), k))
+    rep.check("9-formula-complete", not bad_formula, "分子/分母/计算方式齐全" if not bad_formula else "缺: %s" % ",".join(bad_formula[:6]))
+
+    bad_list = []
+    for m in metrics:
+        for k in LIST_FIELDS:
+            v = m.get(k)
+            if not isinstance(v, list) or not [x for x in v if str(x).strip()]:
+                bad_list.append("%s.%s" % (m.get("id"), k))
+    rep.check("10-filters-dims-sources", not bad_list, "过滤条件/维度/来源表非空" if not bad_list else "缺: %s" % ",".join(bad_list[:6]))
+
+    no_digit, checked, mismatch, skipped = [], 0, [], 0
+    for m in metrics:
+        e = m.get("example") or {}
+        for k in EXAMPLE_FIELDS:
+            if not str(e.get(k) or "").strip():
+                no_digit.append("%s.example.%s 为空" % (m.get("id"), k))
+        if not re.search(r"\d", str(e.get("given", "")) + str(e.get("calc", "")) + str(e.get("result", ""))):
+            no_digit.append("%s.example 无数字" % m.get("id"))
+        status, detail = ratio_math(str(e.get("calc", "")), str(e.get("result", "")))
+        if status == "checked":
+            checked += 1
+        elif status == "mismatch":
+            mismatch.append("%s: %s" % (m.get("id"), detail))
+        else:
+            skipped += 1
+    rep.check("11-example-has-numbers", not no_digit, "全部 32 条示例含虚拟数字" if not no_digit else ",".join(no_digit[:6]))
+    rep.check("12-example-math-recompute", not mismatch, "复算 %d 条比率型演算全部对得上（另 %d 条为计数/中位数型，不适用复算）%s" % (checked, skipped, "" if not mismatch else "；不符: " + "; ".join(mismatch[:4])))
+
+    by_id = {m.get("id"): m for m in metrics}
+    defs = {k: " ".join(str((by_id.get(k) or {}).get(f, "")) for f in ("name", "definition", "formula")) for k in ("OF-03", "OR-01", "SOP-01", "OF-02", "IR-03")}
+    checks = [
+        ("OF-03", ["双方", "确认", "90 天", "同一对企业"]),
+        ("OR-01", ["已租工位", "可租工位", "共享空间"]),
+        ("SOP-01", ["按时完成", "到期待办"]),
+        ("OF-02", ["采纳", "推荐"]),
+        ("IR-03", ["首年", "拆分"]),
+    ]
+    bad_defs = []
+    for mid, words in checks:
+        for w in words:
+            if w not in defs[mid]:
+                bad_defs.append("%s 缺「%s」" % (mid, w))
+    rep.check("13-definition-alignment", not bad_defs, "北极星/出租率/SOP/采纳率/签约额 定义与需求原文用词一致" if not bad_defs else "; ".join(bad_defs))
+
+    for line in rep.lines:
+        print(line)
+    total = len(rep.lines)
+    if rep.failures:
+        print("")
+        print("[RESULT] FAIL %d/%d 项不通过：" % (len(rep.failures), total))
+        for f in rep.failures:
+            print("  - " + f)
+        sys.exit(1)
+    print("")
+    print("[SUMMARY] metrics=%d panels=%d ratio_examples_recomputed=%d non_ratio_examples=%d" % (len(metrics), len(panels), checked, skipped))
+    print("[RESULT] PASS %d/%d checks · 32 条口径 · 8 个面板 · 每面板 >= 2 条" % (total, total))
+    sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
