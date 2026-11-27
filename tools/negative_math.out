@@ -1,4 +1,4 @@
-[PASS] 1-yaml-parse                 文件 _seed_mutated_math.yaml，33021 字节，932 行
+[PASS] 1-yaml-parse                 文件 _seed_mutated_math.yaml，32987 字节，932 行
 [PASS] 2-top-level-fields           schema_version=1.0 library=member-space-metrics
 [PASS] 3-panel-set                  8 个面板: member_scale,profile_completeness,sop_execution,opportunity_funnel,miniapp_activity,ai_adoption,investment_revenue,occupancy_renewal
 [PASS] 4-metric-count>=30           实际 32 条
