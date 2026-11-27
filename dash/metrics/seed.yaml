@@ -419,8 +419,8 @@ metrics:
   source_tables:
   - dwd_match_recommendation
   example:
-    given: 累计推送 1200 条，其中 1150 条已满 7 天窗口，采纳 391 条
-    calc: 1150 为分母；391 ÷ 1150
+    given: 统计期内累计推送 1200 条，其中 50 条推送不满 7 天窗口不计，已满窗口 1150 条中采纳 391 条、未采纳 759 条（391 + 759 = 1150）
+    calc: 391 采纳 ÷ 1150 已满窗口（= 391 + 759）
     result: 391 ÷ 1150 = 34.00%
   formula:
     numerator: recommendation 中 adopted_at 非空（企业点击采纳并生成跟进记录）的条数
