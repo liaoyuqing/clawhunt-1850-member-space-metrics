@@ -24,7 +24,7 @@ python tools/negative_test.py;  echo EXIT=$?     # 反证：两条各 FAIL 1 项
 ## 3 `python tools/validate_metrics.py` 逐字输出（退出码 0，16 行）
 
 ```text
-[PASS] 1-yaml-parse                 文件 seed.yaml，32981 字节，932 行
+[PASS] 1-yaml-parse[PASS] 1-yaml-parse                 文件 seed.yaml，32987 字节，932 行
 [PASS] 2-top-level-fields           schema_version=1.0 library=member-space-metrics
 [PASS] 3-panel-set                  8 个面板: member_scale,profile_completeness,sop_execution,opportunity_funnel,miniapp_activity,ai_adoption,investment_revenue,occupancy_renewal
 [PASS] 4-metric-count>=30           实际 32 条
@@ -56,7 +56,7 @@ python tools/negative_test.py;  echo EXIT=$?     # 反证：两条各 FAIL 1 项
 `tools/negative_test.py` 跑两条反证，各自写入临时文件后重跑校验，两条都必须变红：
 
 ```text
-case1 定义反证（IR-03「首年」→「年度」）: exit=1 fails=1
+case1case1 定义反证（IR-03「首年」→「年度」）: exit=1 fails=1
   [FAIL] 13-definition-alignment      IR-03 缺「首年」
 case2 算式反证（OR-04 分子 14400000→14400001）: exit=1 fails=1
   [FAIL] 12-example-math-recompute    复算 31 条示例全部对得上（覆盖全部条目）；不符: OR-04: 示例算式的分子/分母与结果等式不一致：(14400001.0, 18720000.0) vs (14400000.0, 18720000.0)
