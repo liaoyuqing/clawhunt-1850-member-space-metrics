@@ -752,7 +752,7 @@ metrics:
   - dwd_contract
   example:
     given: 4 月 27 单签约，周期天数升序第 14 位为 41 天（n=27，中位位次）
-    calc: (27+1)÷2=14
+    calc: (27+1)÷2=14；升序第 14 位样本 = 41 天
     result: 41 天（中位样本，n=27）
   formula:
     numerator: 按周期天数升序排列后取中位样本的天数
